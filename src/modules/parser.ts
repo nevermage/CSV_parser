@@ -1,16 +1,15 @@
 import fs from "fs";
 import {LogEntry, LogStatistic} from "../types";
-import {isLogLevel} from "../utils";
-
-const expectedFileHeader = ['timestamp', 'level', 'source', 'message'];
+import csv from 'csv-parser';
 
 export function createParser() {
-    let parsedContent: LogEntry[] = [];
+    const parsedContent: LogEntry[] = [];
     let statistics: LogStatistic | null = null;
 
     return {
         parseCSVFile: async (filename: string) => {
-            parsedContent = await parseCSVFile(filename);
+            const parsedData = await parseCSVFile(filename);
+            parsedContent.push(...parsedData);
         },
         getParsedContent: (filters?: Partial<LogEntry>): LogEntry[] =>
             filters ? filterContent(parsedContent, filters) : parsedContent,
@@ -25,43 +24,20 @@ function parseCSVFile(filename: string): Promise<LogEntry[]> {
             throw new Error(`Could not find file "${filename}"`);
         }
 
-        const fileContent: string = fs.readFileSync(filename, "utf8");
-        const logLines: string[] = fileContent.trim().split("\r\n");
+        const results: LogEntry[] = [];
 
-        if (logLines.length < 2) {
-            return reject(`File "${filename}" is empty`);
-        }
-
-        if (!validateHeader(logLines[0])) {
-            return reject(`File "${filename}" has incorrect format`);
-        }
-
-        logLines.shift(); // delete csv header
-
-        resolve(convertLinesToObjects(logLines));
-    });
-}
-
-function validateHeader(header: string): boolean {
-    const headerAsArray: string[] = header.split(',');
-    return headerAsArray.length === expectedFileHeader.length
-        && expectedFileHeader.every(header => headerAsArray.includes(header));
-}
-
-function convertLinesToObjects(lines: string[]): LogEntry[] {
-    return lines.map((line) => {
-        const lineAsArray: string[] = line.split(',');
-
-        if (!isLogLevel(lineAsArray[1])) {
-            throw new Error(`Could not parse log level "${lineAsArray[1]}"`);
-        }
-
-        return {
-            timestamp: lineAsArray[0],
-            level: lineAsArray[1],
-            source: lineAsArray[2],
-            message: lineAsArray[3],
-        };
+        fs.createReadStream(filename)
+            .pipe(csv())
+            .on('data', (data) => {
+                results.push({
+                    timestamp: data.timestamp,
+                    level: data.level,
+                    source: data.source,
+                    message: data.message,
+                });
+            })
+            .on('end', () => {resolve(results)})
+            .on('error', (err: Error) => reject(err))
     });
 }
 
