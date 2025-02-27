@@ -1,7 +1,6 @@
 import fs from "fs";
-import {LogEntry} from "../interfaces/logEntry";
-import {isLogLevel} from "../types/logLevel";
-import {LogStatistic} from "../interfaces/logStatistic";
+import {LogEntry, LogStatistic} from "../types";
+import {isLogLevel} from "../utils";
 
 const expectedFileHeader = ['timestamp', 'level', 'source', 'message'];
 

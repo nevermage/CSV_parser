@@ -1,6 +1,6 @@
 
 import {createParser} from "./modules/parser";
-import {LogEntry} from "./interfaces/logEntry";
+import {LogEntry} from "./types";
 
 main();
 
