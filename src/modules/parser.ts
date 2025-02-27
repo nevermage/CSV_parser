@@ -43,14 +43,14 @@ function parseCSVFile(filename: string): Promise<LogEntry[]> {
 }
 
 function validateHeader(header: string): boolean {
-    let headerAsArray: string[] = header.split(',');
+    const headerAsArray: string[] = header.split(',');
     return headerAsArray.length === expectedFileHeader.length
         && expectedFileHeader.every(header => headerAsArray.includes(header));
 }
 
 function convertLinesToObjects(lines: string[]): LogEntry[] {
     return lines.map((line) => {
-        let lineAsArray: string[] = line.split(',');
+        const lineAsArray: string[] = line.split(',');
 
         if (!isLogLevel(lineAsArray[1])) {
             throw new Error(`Could not parse log level "${lineAsArray[1]}"`);
@@ -78,41 +78,35 @@ function filterContent(logLines: LogEntry[], filters: Partial<LogEntry>): LogEnt
 }
 
 function calculateStatisticData(logLines: LogEntry[]): LogStatistic {
-    let totalRows: number = logLines.length;
-    let firstErrorAt: string = '';
-    let lastErrorAt: string = '';
-    let errorsAmount: number = 0;
-    let infosAmount: number = 0;
-    let warningsAmount: number = 0;
-    let debugsAmount: number = 0;
+    const calcData: LogStatistic = {
+        totalRows: logLines.length,
+        firstErrorAt: '',
+        lastErrorAt: '',
+        errorsAmount: 0,
+        infosAmount: 0,
+        warningsAmount: 0,
+        debugsAmount: 0,
+    };
 
     logLines.forEach((logEntry: LogEntry) => {
         if (logEntry.level.toLowerCase() === "error") {
-            errorsAmount++;
+            calcData.errorsAmount++;
 
-            if (firstErrorAt === '' || new Date(logEntry.timestamp) < new Date(firstErrorAt)) {
-                firstErrorAt = logEntry.timestamp;
+            if (calcData.firstErrorAt === '' || new Date(logEntry.timestamp) < new Date(calcData.firstErrorAt)) {
+                calcData.firstErrorAt = logEntry.timestamp;
             }
-            if (lastErrorAt === '' || new Date(logEntry.timestamp) > new Date(lastErrorAt)) {
-                lastErrorAt = logEntry.timestamp;
+            if (calcData.lastErrorAt === '' || new Date(logEntry.timestamp) > new Date(calcData.lastErrorAt)) {
+                calcData.lastErrorAt = logEntry.timestamp;
             }
 
         } else if (logEntry.level.toLowerCase() === "warning") {
-            warningsAmount++
+            calcData.warningsAmount++
         } else if (logEntry.level.toLowerCase() === "info") {
-            infosAmount++
+            calcData.infosAmount++
         } else if (logEntry.level.toLowerCase() === "debug") {
-            debugsAmount++
+            calcData.debugsAmount++
         }
     })
 
-    return {
-        totalRows: totalRows,
-        firstErrorAt: firstErrorAt,
-        lastErrorAt: lastErrorAt,
-        errorsAmount: errorsAmount,
-        infosAmount: infosAmount,
-        warningsAmount: warningsAmount,
-        debugsAmount: debugsAmount,
-    }
+    return calcData;
 }

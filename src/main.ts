@@ -2,15 +2,13 @@
 import {createParser} from "./modules/parser";
 import {LogEntry} from "./types";
 
-main();
+main('./large_logs.csv');
 
-async function main() {
-    let fileName: string = './large_logs.csv';
-
+async function main(fileName: string) {
     try {
         const parser = createParser();
         await parser.parseCSVFile(fileName);
-        let fileContentFiltered: LogEntry[] = parser.getParsedContent({source: 'API', level: 'debug'});
+        const fileContentFiltered: LogEntry[] = parser.getParsedContent({source: 'API', level: 'debug'});
         console.log(fileContentFiltered);
         parser.calculateStatisticData();
         console.log(parser.getStatisticData());
