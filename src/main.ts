@@ -14,6 +14,7 @@ async function main(fileName: string) {
         console.log(parser.getStatisticData());
     } catch (err) {
         console.error(err);
+        throw err;
     }
 }
 
