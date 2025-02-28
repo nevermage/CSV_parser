@@ -19,19 +19,20 @@ export function createParser() {
 }
 
 function parseCSVFile(filename: string): Promise<LogEntry[]> {
-    return new Promise((resolve, reject) => {
-        if (!fs.existsSync(filename)) {
-            throw new Error(`Could not find file "${filename}"`);
-        }
+    // throw an error before returning a promise
+    if (!fs.existsSync(filename)) {
+        throw new Error(`Could not find file "${filename}"`);
+    }
 
+    return new Promise((resolve, reject) => {
         const results: LogEntry[] = [];
 
         fs.createReadStream(filename)
             .pipe(csv())
-            .on('data', (data) => {
+            .on('data', (data: Record<string, string>) => {
                 results.push({
                     timestamp: data.timestamp,
-                    level: data.level,
+                    level: data.level as LogEntry['level'],
                     source: data.source,
                     message: data.message,
                 });
@@ -42,15 +43,14 @@ function parseCSVFile(filename: string): Promise<LogEntry[]> {
 }
 
 function filterContent(logLines: LogEntry[], filters: Partial<LogEntry>): LogEntry[] {
-    let filteredContent: LogEntry[] = logLines;
-
-    for (const [field, filterValue] of Object.entries(filters)) {
-        filteredContent = filteredContent.filter((logEntry: LogEntry)=>
-            logEntry[field as keyof LogEntry].toLowerCase() === filterValue.toLowerCase()
-        );
-    }
-
-    return filteredContent
+    return logLines.reduce((acc: LogEntry[], logEntry: LogEntry) => {
+        for (const [field, filterValue] of Object.entries(filters)) {
+            if (logEntry[field as keyof LogEntry].toLowerCase() === filterValue.toLowerCase()) {
+                acc.push(logEntry);
+            }
+        }
+        return acc;
+    }, []);
 }
 
 function calculateStatisticData(logLines: LogEntry[]): LogStatistic {
