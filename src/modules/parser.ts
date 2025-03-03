@@ -43,14 +43,10 @@ function parseCSVFile(filename: string): Promise<LogEntry[]> {
 }
 
 function filterContent(logLines: LogEntry[], filters: Partial<LogEntry>): LogEntry[] {
-    return logLines.reduce((acc: LogEntry[], logEntry: LogEntry) => {
-        for (const [field, filterValue] of Object.entries(filters)) {
-            if (logEntry[field as keyof LogEntry].toLowerCase() === filterValue.toLowerCase()) {
-                acc.push(logEntry);
-            }
-        }
-        return acc;
-    }, []);
+    return logLines.filter((logEntry: LogEntry) => {
+        return Object.entries(filters).every(([key, value]) =>
+            logEntry[key as keyof LogEntry].toLowerCase() === value.toLowerCase());
+    });
 }
 
 function calculateStatisticData(logLines: LogEntry[]): LogStatistic {
